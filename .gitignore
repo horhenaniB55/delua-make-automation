@@ -1,0 +1,22 @@
+# secrets (service-account JSON lives here)
+.env
+*.env
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+opencode.json
+
+# vercel / node
+.vercel
+node_modules/
+dist/
+
+# logs / os
+*.log
+.DS_Store
+Thumbs.db

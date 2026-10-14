@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book a Session · Delua Studio</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--ink:#1f1b16;--mute:#7a7167;--line:#e6dfd4;--accent:#b4793f;--accent-ink:#fff;--err:#b3261e;--full:#f1e6e4}
+@media (prefers-color-scheme:dark){:root{--bg:#161310;--card:#201c18;--ink:#f3ede4;--mute:#a79c8f;--line:#38322b;--accent:#d49a5c;--accent-ink:#161310;--err:#f2b8b5;--full:#33262a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,'Times New Roman',serif;padding:32px 16px}
+main{max-width:560px;margin:0 auto}
+h1{font-weight:400;letter-spacing:.08em;text-transform:uppercase;font-size:28px;margin:0}
+.sub{color:var(--mute);margin:6px 0 28px;font-family:system-ui,sans-serif;font-size:14px}
+form,.done{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;font-family:system-ui,sans-serif}
+label,.lbl{display:block;font-size:13px;color:var(--mute);margin:16px 0 6px}
+input,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.pk{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pk label{margin:0;cursor:pointer}
+.pk input{position:absolute;opacity:0}
+.pk span{display:block;padding:12px;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:14px}
+.pk small{display:block;color:var(--mute);font-size:12px}
+.pk input:checked+span{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.cal{border:1px solid var(--line);border-radius:12px;padding:12px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ch b{font-weight:600;font-size:15px}
+.ch button{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--ink);font-size:16px;cursor:pointer}
+.ch button:disabled{opacity:.3;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.grid .w{font-size:11px;color:var(--mute);padding:4px 0}
+.grid button,.grid i{aspect-ratio:1;border-radius:8px;font:inherit;font-size:14px;border:1px solid transparent}
+.grid button{background:transparent;color:var(--ink);cursor:pointer}
+.grid button.ok{border-color:var(--line)}
+.grid button.ok:hover{border-color:var(--accent)}
+.grid button.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.grid button.full{background:var(--full);color:var(--mute);text-decoration:line-through;cursor:not-allowed}
+.grid button.past{color:var(--mute);opacity:.35;cursor:not-allowed}
+.grid.busy button.ok{opacity:.45}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mute)}
+.leg span:before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+.leg .a:before{background:transparent}.leg .f:before{background:var(--full)}.leg .s:before{background:var(--accent);border-color:var(--accent)}
+#slots{display:flex;flex-wrap:wrap;gap:8px;min-height:40px}
+#slots button{padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer;font:inherit;font-size:14px}
+#slots button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#slots p{margin:8px 0;color:var(--mute);font-size:14px}
+.go{width:100%;margin-top:22px;padding:14px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:600 15px system-ui,sans-serif;cursor:pointer}
+.go:disabled{opacity:.5;cursor:not-allowed}
+.msg{margin-top:14px;font-size:14px;color:var(--err);min-height:1em}
+.hp{position:absolute;left:-9999px}
+.done{text-align:center}.done h2{font-weight:400;margin:0 0 8px}.done code{font-size:18px;color:var(--accent)}
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;font-family:system-ui,sans-serif}
+.ovl .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 36px;text-align:center;color:var(--ink)}
+.spin{width:38px;height:38px;margin:0 auto 12px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ovl p{margin:0;font-size:14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1>Delua Studio</h1>
+<p class="sub">Book your photo session. All times are Manila time (PHT).</p>
+
+<form id="f" novalidate>
+  <label for="name">Full name</label><input id="name" required autocomplete="name">
+  <label for="email">Email</label><input id="email" type="email" required autocomplete="email">
+  <label for="phone">Phone number</label><input id="phone" type="tel" required autocomplete="tel">
+
+  <div class="lbl">Package</div>
+  <div class="pk">
+    <label><input type="radio" name="pkg" value="Basic" checked><span><b>Basic</b><small>1 hour session</small></span></label>
+    <label><input type="radio" name="pkg" value="Premium"><span><b>Premium</b><small>2 hour session</small></span></label>
+  </div>
+
+  <div class="lbl">Pick a date</div>
+  <div class="cal">
+    <div class="ch"><button type="button" id="prev" aria-label="Previous month">‹</button><b id="mt"></b><button type="button" id="next" aria-label="Next month">›</button></div>
+    <div class="grid" id="grid"></div>
+    <div class="leg"><span class="a">Available</span><span class="f">Fully booked</span><span class="s">Selected</span></div>
+    <div class="msg" id="cmsg" style="margin-top:8px"></div>
+  </div>
+
+  <div class="lbl">Available times</div>
+  <div id="slots"><p>Choose a date to see open times.</p></div>
+
+  <label for="notes">Notes (optional)</label><textarea id="notes" rows="3" placeholder="Occasion, outfit ideas, special requests…"></textarea>
+  <input class="hp" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+  <button class="go" id="go" type="submit" disabled>Book session</button>
+  <div class="msg" id="msg" role="alert"></div>
+</form>
+
+<div class="ovl" id="ovl" hidden><div class="card"><div class="spin"></div><p>Confirming your booking…</p></div></div>
+
+<div class="done" id="done" hidden>
+  <h2>You're booked.</h2>
+  <p>Booking ID <code id="bid"></code></p>
+  <p style="color:var(--mute);font-size:14px">A confirmation email with your calendar invite is on its way. Check your spam folder if you don't see it.</p>
+</div>
+</main>
+
+<script>
+const HOOK = 'https://hook.eu1.make.com/your-make-webhook';
+const CAL = 'http://localhost:8000/api'; // reads: FastAPI (Make stays for book)
+const $ = id => document.getElementById(id);
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const p2 = n => String(n).padStart(2, '0');
+const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+const [ty, tm] = today.split('-').map(Number);
+const MAX_AHEAD = 6;
+let vy = ty, vm = tm - 1, date = '', time = '', slotReq = 0, monReq = 0, full = null;
+const cache = {};
+
+const pkg = () => document.querySelector('input[name=pkg]:checked').value;
+const fmt = t => { const [h, m] = t.split(':').map(Number); return (h % 12 || 12) + ':' + p2(m) + (h < 12 ? ' AM' : ' PM'); };
+const parse = s => JSON.parse(s.replace(/```json|```/g, '').trim());
+const ready = () => { $('go').disabled = !(date && time && $('name').value && $('email').value && $('phone').value); };
+
+function render() {
+  $('mt').textContent = MONTHS[vm] + ' ' + vy;
+  const off = (vy - ty) * 12 + vm - (tm - 1);
+  $('prev').disabled = off <= 0; $('next').disabled = off >= MAX_AHEAD;
+  const g = $('grid'); g.className = 'grid' + (full === null ? ' busy' : '');
+  g.innerHTML = ['S','M','T','W','T','F','S'].map(d => '<div class="w">' + d + '</div>').join('');
+  const first = new Date(vy, vm, 1).getDay(), days = new Date(vy, vm + 1, 0).getDate();
+  for (let i = 0; i < first; i++) g.appendChild(document.createElement('i'));
+  for (let d = 1; d <= days; d++) {
+    const ds = vy + '-' + p2(vm + 1) + '-' + p2(d), b = document.createElement('button');
+    b.type = 'button'; b.textContent = d;
+    if (ds < today) { b.className = 'past'; b.disabled = true; }
+    else if (full && full.includes(ds)) { b.className = 'full'; b.disabled = true; b.title = 'Fully booked'; }
+    else { b.className = 'ok' + (ds === date ? ' sel' : ''); b.onclick = () => pick(ds); }
+    g.appendChild(b);
+  }
+}
+
+async function loadMonth() {
+  const id = ++monReq, key = vy + '-' + p2(vm + 1) + '|' + pkg();
+  $('cmsg').textContent = '';
+  if (cache[key]) { full = cache[key]; render(); return; }
+  full = null; render();
+  const from = vy + '-' + p2(vm + 1) + '-01', ny = vm === 11 ? vy + 1 : vy, nm = vm === 11 ? 1 : vm + 2;
+  const to = ny + '-' + p2(nm) + '-01';
+  try {
+    const r = await fetch(CAL + '/month?from=' + from + '&to=' + to + '&package=' + pkg());
+    const j = parse(await r.text());
+    if (id !== monReq) return;
+    cache[key] = full = Array.isArray(j.full) ? j.full : [];
+  } catch (e) {
+    if (id !== monReq) return;
+    full = []; $('cmsg').textContent = 'Could not check which dates are full. You can still pick a date; times are verified next.';
+  }
+  if (date && full.includes(date)) { date = ''; time = ''; $('slots').innerHTML = '<p>Choose a date to see open times.</p>'; ready(); }
+  render();
+}
+
+function pick(ds) { date = ds; render(); loadSlots(); }
+
+async function loadSlots() {
+  time = ''; ready();
+  const id = ++slotReq, box = $('slots');
+  box.innerHTML = '<p>Checking availability…</p>';
+  try {
+    const r = await fetch(CAL + '/availability?date=' + date + '&package=' + pkg());
+    const j = parse(await r.text());
+    if (id !== slotReq) return;
+    if (!j.slots || !j.slots.length) { box.innerHTML = '<p>No open times on this date. Please try another day.</p>'; return; }
+    box.innerHTML = '';
+    j.slots.forEach(t => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(t);
+      b.onclick = () => { time = t; box.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); ready(); };
+      box.appendChild(b);
+    });
+  } catch (e) { if (id === slotReq) box.innerHTML = '<p>Could not load times. Please try again.</p>'; }
+}
+
+$('prev').onclick = () => { vm--; if (vm < 0) { vm = 11; vy--; } loadMonth(); };
+$('next').onclick = () => { vm++; if (vm > 11) { vm = 0; vy++; } loadMonth(); };
+document.querySelectorAll('input[name=pkg]').forEach(r => r.onchange = () => { loadMonth(); if (date) loadSlots(); });
+['name', 'email', 'phone'].forEach(i => $(i).oninput = ready);
+
+$('f').onsubmit = async e => {
+  e.preventDefault(); $('msg').textContent = '';
+  if (!/^\S+@\S+\.\S+$/.test($('email').value)) { $('msg').textContent = 'Please enter a valid email.'; return; }
+  if ($('website').value) { $('f').hidden = true; $('done').hidden = false; return; }
+  $('go').disabled = true; $('go').textContent = 'Booking…'; $('ovl').hidden = false;
+  const body = new URLSearchParams({
+    action: 'book', name: $('name').value.trim(), email: $('email').value.trim(), phone: $('phone').value.trim(),
+    date, time, start: date + 'T' + time + ':00+08:00', package: pkg(), notes: $('notes').value.trim()
+  });
+  try {
+    const r = await fetch(HOOK, { method: 'POST', body });
+    const j = parse(await r.text());
+    if (j.status === 'ok') { $('bid').textContent = j.bookingId; $('ovl').hidden = true; $('f').hidden = true; $('done').hidden = false; return; }
+    $('msg').textContent = j.message || 'Something went wrong. Please try again.';
+    if (j.status === 'conflict') { delete cache[vy + '-' + p2(vm + 1) + '|' + pkg()]; loadMonth(); loadSlots(); }
+  } catch (err) { $('msg').textContent = 'Could not complete your booking. Please try again.'; }
+  $('ovl').hidden = true; $('go').textContent = 'Book session'; ready();
+};
+
+loadMonth();
+</script>
+</body>
+</html>
